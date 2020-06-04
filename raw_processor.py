@@ -15,13 +15,23 @@ home_df = pd.read_csv(path_to_excel, encoding='latin-1')
 
 # Find which column home values start
 first_value = 0
+date_format_dash = True
 for col in home_df.columns:
+	date_pattern = re.compile("[0-9]+-[0-9]+-[0-9]+")
+	if date_pattern.match(col.strip()):
+		date_format_dash = True
+		break
 	date_pattern = re.compile("[0-9]+/[0-9]+/[0-9]+")
 	if date_pattern.match(col.strip()):
+		date_format_dash = False
 		break
 	first_value += 1
 x_data = home_df.columns[first_value:].tolist()
-x_data = [datetime.strptime(x, "%m/%d/%y") for x in x_data if x]
+if date_format_dash == True:
+	x_data = [datetime.strptime(x, "%Y-%m-%d") for x in x_data if x]
+else:
+	# Old style
+	x_data = [datetime.strptime(x, "%m/%d/%y") for x in x_data if x]
 
 # If you downloaded something other than Metro or City Data, you may have to change RegionName to be something else
 # You may also need to change the variable 'interested_cities'
@@ -38,7 +48,7 @@ cities = {}
 fig, axs = plt.subplots(nrows=1, ncols=2)
 ax = axs[0]
 for city, found_city in city_mapping.items():
-	# Convert dataframe to list
+	# Convert data frame to list
 	y_data = home_df[home_df.RegionName == city_mapping[city]].values.tolist()[0]
 	# Get the price data only
 	y_data = y_data[first_value:]
@@ -93,4 +103,3 @@ ax.legend()
 plt.xticks(rotation=60)
 fig.tight_layout()
 plt.show()
-
